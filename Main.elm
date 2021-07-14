@@ -8,20 +8,21 @@ import Auth
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import Json.Decode exposing (Decoder)
+import Json.Decode
+import Browser
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.document
         { view = view
         , update = update
-        , init = ( initialModel, searchFeed )
+        , init = \_ -> ( initialModel, searchFeed )
         , subscriptions = \_ -> Sub.none
         }
 
 
-initialModel : Model
+initialModel :  Model
 initialModel =
     { status = "Verifying setup..."
     }
@@ -35,26 +36,35 @@ searchFeed : Cmd Msg
 searchFeed =
     let
         url =
-            "https://api.github.com/search/repositories?q=test&access_token=" ++ Auth.token
+            "https://api.github.com/search/repositories?q=test"
+        decoder = Json.Decode.succeed ()
+        req =
+            { method = "GET"
+            , headers = [ Http.header "Authorization" <| "token " ++ Auth.token ]
+            , url = url
+            , body = Http.emptyBody
+            , expect = Http.expectJson Response decoder
+            , timeout = Nothing
+            , tracker = Nothing
+            }
     in
-    Json.Decode.succeed ()
-        |> Http.get url
-        |> Http.send Response
+        Http.request req
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
-    div [ class "content" ]
-        [ header [] [ h1 [] [ text "Elm Workshop" ] ]
-        , div
-            [ style
-                [ ( "font-size", "48px" )
-                , ( "text-align", "center" )
-                , ( "padding", "48px" )
+    { title = "Big Test"
+    , body = [
+        div [ class "content" ]
+            [ header [] [ h1 [] [ text "Elm Workshop" ] ]
+            , div
+                [ style "font-size" "48px"
+                , style "text-align" "center"
+                , style "padding" "48px"
                 ]
-            ]
-            [ text model.status ]
-        ]
+                [ text model.status ]
+            ]]
+    }
 
 
 type Msg
@@ -62,7 +72,7 @@ type Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg _ =
     case msg of
         Response (Ok ()) ->
             ( { status = "You're all set!" }, Cmd.none )
@@ -80,18 +90,15 @@ update msg model =
                         Http.BadUrl url ->
                             "Invalid test URL: " ++ url
 
-                        Http.BadPayload msg _ ->
-                            "Something is misconfigured: " ++ msg
+                        Http.BadBody bbMsg ->
+                            "Invalid Response palyload: " ++ bbMsg
 
-                        Http.BadStatus { status } ->
-                            case status.code of
+                        Http.BadStatus st ->
+                            case st of
                                 401 ->
                                     "Auth.elm does not have a valid token. :( Try recreating Auth.elm by following the steps in the README under the section “Create a GitHub Personal Access Token”."
 
                                 _ ->
-                                    "GitHub's Search API returned an error: "
-                                        ++ toString status.code
-                                        ++ " "
-                                        ++ status.message
+                                    "GitHub's Search API returned an error: " ++ String.fromInt st
             in
             ( { status = status }, Cmd.none )
