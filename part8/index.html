@@ -19,7 +19,7 @@
   // documentation: https://github.com/michael/github
   var github = new Github();
 
-  var app = Elm.Main.embed(document.getElementById("elm-landing-pad"));
+  var app = Elm.Main.init({ node: document.getElementById("elm-landing-pad") });
 
   function searchGithub(query) {
     console.log("Searching for", query);
