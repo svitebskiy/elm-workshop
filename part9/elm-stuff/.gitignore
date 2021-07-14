@@ -1,0 +1,6 @@
+build-artifacts
+*.md
+*.yml
+.eslintrc
+*.sh
+0.19.1/*

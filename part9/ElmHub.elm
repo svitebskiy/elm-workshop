@@ -1,19 +1,17 @@
 port module ElmHub exposing (..)
 
-import src-auth.Auth
+import Auth
 import Html exposing (..)
-import Html.Attributes exposing (class, defaultValue, href, property, target)
+import Html.Attributes exposing (class, href, property, target)
 import Html.Events exposing (..)
-import Json.Decode exposing (Decoder)
+import Json.Decode exposing (Decoder, succeed, errorToString)
 import Json.Decode.Pipeline exposing (..)
 
 
 getQueryString : String -> String
 getQueryString query =
     -- See https://developer.github.com/v3/search/#example for how to customize!
-    "access_token="
-        ++ src-auth.Auth.token
-        ++ "&q="
+    "q="
         ++ query
         ++ "+language:elm&sort=stars&order=desc"
 
@@ -25,7 +23,7 @@ responseDecoder =
 
 searchResultDecoder : Decoder SearchResult
 searchResultDecoder =
-    decode SearchResult
+    succeed SearchResult
         |> required "id" Json.Decode.int
         |> required "full_name" Json.Decode.string
         |> required "stargazers_count" Json.Decode.int
@@ -55,7 +53,7 @@ initialModel =
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, githubSearch (getQueryString initialModel.query) )
+    ( initialModel, githubSearch { token = Auth.token, query = getQueryString initialModel.query} )
 
 
 subscriptions : Model -> Sub Msg
@@ -70,7 +68,7 @@ view model =
             [ h1 [] [ text "ElmHub" ]
             , span [ class "tagline" ] [ text "Like GitHub, but for Elm things." ]
             ]
-        , input [ class "search-query", onInput SetQuery, defaultValue model.query ] []
+        , input [ class "search-query", onInput SetQuery, Html.Attributes.value model.query ] []
         , button [ class "search-button", onClick Search ] [ text "Search" ]
         , viewErrorMessage model.errorMessage
         , ul [ class "results" ] (List.map viewSearchResult model.results)
@@ -90,7 +88,7 @@ viewErrorMessage errorMessage =
 viewSearchResult : SearchResult -> Html Msg
 viewSearchResult result =
     li []
-        [ span [ class "star-count" ] [ text (toString result.stars) ]
+        [ span [ class "star-count" ] [ text (String.fromInt result.stars) ]
         , a [ href ("https://github.com/" ++ result.name), target "_blank" ]
             [ text result.name ]
         , button [ class "hide-result", onClick (DeleteById result.id) ]
@@ -111,7 +109,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Search ->
-            ( model, githubSearch (getQueryString model.query) )
+            ( model, githubSearch { token = Auth.token, query = getQueryString model.query } )
 
         SetQuery query ->
             ( { model | query = query }, Cmd.none )
@@ -144,20 +142,24 @@ decodeGithubResponse value =
             HandleSearchResponse results
 
         Err err ->
-            HandleSearchError (Just err)
+            HandleSearchError (Just (errorToString err))
 
 
 decodeResponse : Json.Decode.Value -> Msg
 decodeResponse json =
     case Json.Decode.decodeValue responseDecoder json of
         Err err ->
-            HandleSearchError (Just err)
+            HandleSearchError (Just (errorToString err))
 
         Ok results ->
             HandleSearchResponse results
 
+type alias GitHubQueryRequest =
+    { token : String
+    , query : String
+    }
 
-port githubSearch : String -> Cmd msg
+port githubSearch : GitHubQueryRequest -> Cmd msg
 
 
 port githubResponse : (Json.Decode.Value -> msg) -> Sub msg

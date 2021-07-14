@@ -2,13 +2,14 @@ module Main exposing (main)
 
 import ElmHub
 import Html
+import Browser
 
 
-main : Program Never ElmHub.Model ElmHub.Msg
+main : Program () ElmHub.Model ElmHub.Msg
 main =
-    Html.program
+    Browser.element
         { view = ElmHub.view
         , update = ElmHub.update
-        , init = ElmHub.init
+        , init = \_ -> ElmHub.init
         , subscriptions = ElmHub.subscriptions
         }
