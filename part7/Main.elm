@@ -2,19 +2,20 @@ module Main exposing (..)
 
 import Auth
 import Html exposing (..)
-import Html.Attributes exposing (class, defaultValue, href, property, target)
+import Html.Attributes exposing (class, value, href, property, target)
 import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder)
+import Json.Decode exposing (Decoder, succeed)
 import Json.Decode.Pipeline exposing (..)
+import Browser
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { view = view
         , update = update
-        , init = ( initialModel, searchFeed initialModel.query )
+        , init = \_ -> ( initialModel, searchFeed initialModel.query )
         , subscriptions = \_ -> Sub.none
         }
 
@@ -23,11 +24,18 @@ searchFeed : String -> Cmd Msg
 searchFeed query =
     let
         url =
-            "https://api.github.com/search/repositories?access_token="
-                ++ Auth.token
-                ++ "&q="
+            "https://api.github.com/search/repositories?q="
                 ++ query
                 ++ "+language:elm&sort=stars&order=desc"
+        req =
+            { method = "GET"
+            , headers = [ Http.header "Authorization" <| "token " ++ Auth.token ]
+            , url = url
+            , body = Http.emptyBody
+            , expect = Http.expectJson HandleSearchResponse responseDecoder
+            , timeout = Nothing
+            , tracker = Nothing
+            }
 
         -- HINT: responseDecoder may be useful here.
         request =
@@ -47,7 +55,7 @@ responseDecoder =
 
 searchResultDecoder : Decoder SearchResult
 searchResultDecoder =
-    decode SearchResult
+    succeed SearchResult
         |> required "id" Json.Decode.int
         |> required "full_name" Json.Decode.string
         |> required "stargazers_count" Json.Decode.int
@@ -82,7 +90,7 @@ view model =
             [ h1 [] [ text "ElmHub" ]
             , span [ class "tagline" ] [ text "Like GitHub, but for Elm things." ]
             ]
-        , input [ class "search-query", onInput SetQuery, defaultValue model.query ] []
+        , input [ class "search-query", onInput SetQuery, value model.query ] []
         , button [ class "search-button", onClick Search ] [ text "Search" ]
         , viewErrorMessage model.errorMessage
         , ul [ class "results" ] (List.map viewSearchResult model.results)
@@ -102,7 +110,7 @@ viewErrorMessage errorMessage =
 viewSearchResult : SearchResult -> Html Msg
 viewSearchResult result =
     li []
-        [ span [ class "star-count" ] [ text (toString result.stars) ]
+        [ span [ class "star-count" ] [ text (String.fromInt result.stars) ]
         , a [ href ("https://github.com/" ++ result.name), target "_blank" ]
             [ text result.name ]
         , button [ class "hide-result", onClick (DeleteById result.id) ]

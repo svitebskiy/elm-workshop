@@ -1,6 +1,6 @@
 port module ElmHub exposing (..)
 
-import Auth
+import src-auth.Auth
 import Html exposing (..)
 import Html.Attributes exposing (checked, class, defaultValue, href, placeholder, target, type_, value)
 import Html.Events exposing (..)
@@ -303,7 +303,7 @@ getQueryString : Model -> String
 getQueryString model =
     -- See https://developer.github.com/v3/search/#example for how to customize!
     "access_token="
-        ++ Auth.token
+        ++ src-auth.Auth.token
         ++ "&q="
         ++ model.query
         ++ "+in:"

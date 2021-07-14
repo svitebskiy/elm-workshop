@@ -1,6 +1,6 @@
 port module ElmHub exposing (..)
 
-import Auth
+import src-auth.Auth
 import Html exposing (..)
 import Html.Attributes exposing (class, defaultValue, href, property, target)
 import Html.Events exposing (..)
@@ -12,7 +12,7 @@ getQueryString : String -> String
 getQueryString query =
     -- See https://developer.github.com/v3/search/#example for how to customize!
     "access_token="
-        ++ Auth.token
+        ++ src-auth.Auth.token
         ++ "&q="
         ++ query
         ++ "+language:elm&sort=stars&order=desc"
