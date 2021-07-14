@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-
+import Browser
 
 type alias Model =
     { query : String
@@ -76,7 +76,7 @@ view model =
 -}
 viewSearchResult result =
     li []
-        [ span [ class "star-count" ] [ text (toString result.stars) ]
+        [ span [ class "star-count" ] [ text (String.fromInt result.stars) ]
         , a [ href ("https://github.com/" ++ result.name), target "_blank" ]
             [ text result.name ]
         , button
@@ -97,8 +97,8 @@ update msg model =
 
 
 main =
-    Html.beginnerProgram
+    Browser.sandbox
         { view = view
         , update = update
-        , model = initialModel
+        , init = initialModel
         }
