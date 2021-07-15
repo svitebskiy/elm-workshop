@@ -1,10 +1,10 @@
 port module ElmHub exposing (..)
 
-import src-auth.Auth
+import Auth
 import Html exposing (..)
-import Html.Attributes exposing (checked, class, defaultValue, href, placeholder, target, type_, value)
+import Html.Attributes exposing (checked, class, href, placeholder, target, type_, value)
 import Html.Events exposing (..)
-import Json.Decode exposing (Decoder)
+import Json.Decode exposing (Decoder, succeed, errorToString)
 import Json.Decode.Pipeline exposing (..)
 import String
 import Table
@@ -17,7 +17,7 @@ responseDecoder =
 
 searchResultDecoder : Decoder SearchResult
 searchResultDecoder =
-    decode SearchResult
+    succeed SearchResult
         |> required "id" Json.Decode.int
         |> required "full_name" Json.Decode.string
         |> required "stargazers_count" Json.Decode.int
@@ -64,7 +64,7 @@ initialModel =
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, githubSearch (getQueryString initialModel) )
+    ( initialModel, githubSearch { token = Auth.token, query = getQueryString initialModel } )
 
 
 subscriptions : Model -> Sub Msg
@@ -100,7 +100,7 @@ update msg model =
             ( { model | options = updateOptions optionsMsg model.options }, Cmd.none )
 
         Search ->
-            ( model, githubSearch (getQueryString model) )
+            ( model, githubSearch { token = Auth.token, query = getQueryString model } )
 
         SetQuery query ->
             ( { model | query = query }, Cmd.none )
@@ -136,7 +136,7 @@ onBlurWithTargetValue toMsg =
 tableConfig : Table.Config SearchResult Msg
 tableConfig =
     Table.config
-        { toId = .id >> toString
+        { toId = .id >> String.fromInt
         , toMsg =
             -- TODO have the table use SetTableState for its toMsg instead of:
             \tableState -> DoNothing
@@ -167,10 +167,10 @@ updateOptions optionsMsg options =
     case optionsMsg of
         SetMinStars minStarsStr ->
             case String.toInt minStarsStr of
-                Ok minStars ->
+                Just minStars ->
                     { options | minStars = minStars, minStarsError = Nothing }
 
-                Err _ ->
+                Nothing ->
                     { options
                         | minStarsError =
                             Just "Must be an integer!"
@@ -199,7 +199,7 @@ view model =
         , div [ class "search" ]
             [ Html.map Options (viewOptions model.options)
             , div [ class "search-input" ]
-                [ input [ class "search-query", onInput SetQuery, defaultValue model.query ] []
+                [ input [ class "search-query", onInput SetQuery, Html.Attributes.value model.query ] []
                 , button [ class "search-button", onClick Search ] [ text "Search" ]
                 ]
             ]
@@ -223,7 +223,7 @@ viewErrorMessage errorMessage =
 viewStars : SearchResult -> Table.HtmlDetails Msg
 viewStars result =
     Table.HtmlDetails []
-        [ span [ class "star-count" ] [ text (toString result.stars) ] ]
+        [ span [ class "star-count" ] [ text (String.fromInt result.stars) ] ]
 
 
 viewSearchResult : SearchResult -> Table.HtmlDetails Msg
@@ -258,7 +258,7 @@ viewOptions opts =
             , input
                 [ type_ "text"
                 , placeholder "Enter a username"
-                , defaultValue opts.userFilter
+                , Html.Attributes.value opts.userFilter
                 , onInput SetUserFilter
                 ]
                 []
@@ -268,7 +268,7 @@ viewOptions opts =
             , input
                 [ type_ "text"
                 , onBlurWithTargetValue SetMinStars
-                , defaultValue (toString opts.minStars)
+                , Html.Attributes.value (String.fromInt opts.minStars)
                 ]
                 []
             , viewMinStarsError opts.minStarsError
@@ -283,7 +283,7 @@ decodeGithubResponse value =
             HandleSearchResponse results
 
         Err err ->
-            HandleSearchError (Just err)
+            HandleSearchError (Just (errorToString err))
 
 
 onChange : (String -> msg) -> Attribute msg
@@ -295,13 +295,19 @@ decodeResponse : Json.Decode.Value -> Msg
 decodeResponse json =
     case Json.Decode.decodeValue responseDecoder json of
         Err err ->
-            HandleSearchError (Just err)
+            HandleSearchError (Just (errorToString err))
 
         Ok results ->
             HandleSearchResponse results
 
 
-port githubSearch : String -> Cmd msg
+type alias GitHubQueryRequest =
+    { token : String
+    , query : String
+    }
+
+
+port githubSearch : GitHubQueryRequest -> Cmd msg
 
 
 port githubResponse : (Json.Decode.Value -> msg) -> Sub msg
@@ -333,14 +339,12 @@ nicer, is generally the preferred way to go about building things in Elm.
 getQueryString : Model -> String
 getQueryString model =
     -- See https://developer.github.com/v3/search/#example for how to customize!
-    "access_token="
-        ++ src-auth.Auth.token
-        ++ "&q="
+    "q="
         ++ model.query
         ++ "+in:"
         ++ model.options.searchIn
         ++ "+stars:>="
-        ++ toString model.options.minStars
+        ++ String.fromInt model.options.minStars
         ++ "+language:elm"
         ++ (if String.isEmpty model.options.userFilter then
                 ""
