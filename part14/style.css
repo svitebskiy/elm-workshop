@@ -1,3 +1,9 @@
+/*
+Ported from the old Elm 0.18 ElmHubCss.elm by hand.
+It is no longer possible to re-generate it using older elm-css NPM utlity
+as it requires Node 10 and does not work on later Node versions.
+*/
+
 .hide-result {
     background-color: transparent;
     font-weight: bold;
@@ -8,21 +14,21 @@
 }
 
 .hide-result:hover {
-    color: rgb(96, 181, 204);
+    color: #60b5cc;
 }
 
 .content {
     width: 960px;
     margin: 0 auto;
     padding: 30px;
-    font-family: Helvetica, Arial, serif;
+    font-family: 'Helvetica', 'Arial', 'serif';
 }
 
 header {
     position: relative;
     padding: 6px 12px;
     height: 36px;
-    background-color: rgb(96, 181, 204);
+    background-color: #60b5cc;
 }
 
 h1 {
@@ -45,7 +51,7 @@ h1 {
     padding: 0;
 }
 
-.results  li {
+.results li {
     font-size: 18px;
     margin-bottom: 16px;
 }
@@ -56,7 +62,7 @@ h1 {
 }
 
 a {
-    color: rgb(96, 181, 204);
+    color: #60b5cc;
     text-decoration: none;
 }
 
@@ -76,16 +82,16 @@ a:hover {
     font-size: 24px;
     color: #ffffff;
     border: 1px solid #cccccc;
-    background-color: rgb(96, 181, 204);
+    background-color: #60b5cc;
     margin-left: 12px;
 }
 
 .search-button:hover {
-    color: rgb(96, 181, 204);
+    color: #60b5cc;
     background-color: #ffffff;
 }
 
-.search-option  input[type="text"] {
+.search-option input[type='text'] {
     padding: 5px;
     box-sizing: border-box;
     width: 90%;
@@ -96,13 +102,13 @@ button:focus, input:focus {
 }
 
 .search::after {
-    content: "";
+    content: '';
     display: table;
     clear: both;
 }
 
 .error {
-    background-color: #FF9632;
+    background-color: #ff9632;
     padding: 20px;
     box-sizing: border-box;
     overflow-x: auto;
@@ -121,7 +127,7 @@ th {
 }
 
 th:hover {
-    color: rgb(96, 181, 204);
+    color: #60b5cc;
 }
 
 th, td {
@@ -130,7 +136,7 @@ th, td {
 }
 
 .stars-error {
-    background-color: #FF9632;
+    background-color: #ff9632;
     font-size: 16px;
     padding: 10px;
     margin-right: 24px;

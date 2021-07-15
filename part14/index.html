@@ -15,14 +15,18 @@
 </body>
 
 <script type="text/javascript">
-  // documentation: https://github.com/michael/github
-  var github = new Github();
+  var app = Elm.Main.init({ node: document.getElementById("elm-landing-pad") });
 
-  var app = Elm.Main.embed(document.getElementById("elm-landing-pad"));
+  function searchGithub(req) {
+    // documentation: https://github.com/michael/github
+    var github = new Github({ token: req.token });
 
-  function searchGithub(query) {
-    github.getSearch(query).repositories({}, function (err, repositories) {
-      app.ports.githubResponse.send(repositories);
+    github.getSearch(req.query).repositories({}, function (err, repositories) {
+      if (err != null) {
+        alert('An error ' + err.error + ' has occurred!');
+      } else {
+        app.ports.githubResponse.send(repositories);
+      }
     });
   }
 
