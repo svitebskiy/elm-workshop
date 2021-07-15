@@ -42,7 +42,7 @@ We'll be using GitHub's [Search API](https://developer.github.com/v3/search/), a
 
 1. Visit https://github.com/settings/tokens/new
 2. Enter "Elm Workshop" under "Token description" and leave everything else blank.
-3. Create the token and copy it into a new file called `Auth.elm`:
+3. Create the token and copy it into a new file called `src-auth\Auth.elm`:
 
 #### Auth.elm
 
