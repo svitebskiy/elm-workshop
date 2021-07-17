@@ -3,7 +3,7 @@ module Tests exposing (..)
 import ElmHub exposing (responseDecoder)
 import Expect exposing (Expectation)
 import Fuzz exposing (..)
-import Json.Decode exposing (Value, decodeString)
+import Json.Decode exposing (Value, decodeString, errorToString)
 import String
 import Test exposing (..)
 
@@ -46,7 +46,7 @@ all =
             \ids ->
                 let
                     jsonFromId id =
-                        """{"id": """ ++ toString id ++ """, "full_name": "foo", "stargazers_count": 42}"""
+                        """{"id": """ ++ String.fromInt id ++ """, "full_name": "foo", "stargazers_count": 42}"""
 
                     jsonItems =
                         String.join ", " (List.map jsonFromId ids)
@@ -60,5 +60,5 @@ all =
                             |> Expect.equal (List.length ids)
 
                     Err err ->
-                        Expect.fail ("JSON decoding failed unexpectedly: " ++ err)
+                        Expect.fail ("JSON decoding failed unexpectedly: " ++ errorToString err)
         ]
